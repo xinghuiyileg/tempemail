@@ -166,11 +166,19 @@ const refreshMessages = async () => {
 }
 
 const openMessage = async (message) => {
-  selectedMessage.value = message
-  
-  // 标记为已读
-  if (!message.is_read) {
-    await messageStore.markAsRead(message.id)
+  try {
+    // 获取完整内容（包含 body_html/body_text）
+    const full = await messageStore.getMessage(message.id)
+    selectedMessage.value = full || message
+
+    // 标记为已读
+    if (!message.is_read) {
+      await messageStore.markAsRead(message.id)
+      message.is_read = true
+    }
+  } catch (e) {
+    // 回退显示列表中的简要内容
+    selectedMessage.value = message
   }
 }
 
