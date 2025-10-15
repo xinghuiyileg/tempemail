@@ -1,0 +1,63 @@
+# 依赖
+node_modules/
+.pnp
+.pnp.js
+
+# 测试
+coverage/
+
+# 生产构建
+dist/
+build/
+.output/
+
+# 环境变量
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.dev.vars
+
+# 日志
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# 编辑器
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+*.sublime-workspace
+*.sublime-project
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Cloudflare
+.wrangler/
+wrangler.toml.backup
+
+# 数据库
+*.db
+*.sqlite
+*.sqlite3
+database/
+
+# 临时文件
+*.log
+*.tmp
+.cache/
+
+# Workers 特定
+worker-configuration.d.ts
+
