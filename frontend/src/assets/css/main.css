@@ -113,6 +113,7 @@ body {
 
 /* 按钮样式 */
 .btn {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -122,44 +123,49 @@ body {
   border: 2px solid transparent;
   font-weight: 700;
   cursor: pointer;
-  transition: all 0.22s ease;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   white-space: nowrap;
   user-select: none;
   font-size: 0.95rem;
+  overflow: hidden;
 }
 
 .btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+  transform: none !important;
 }
 
 .btn-primary {
-  background: var(--brand);
+  background: linear-gradient(135deg, var(--brand) 0%, var(--brand-2) 100%);
   color: #fff;
+  box-shadow: 0 2px 8px rgba(108, 123, 255, 0.25);
 }
 
 .btn-primary:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(108, 123, 255, 0.4);
 }
 
-/* 动态风格按钮增强互动性 */
-.btn {
-  position: relative;
-  overflow: hidden;
+.btn-primary:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(108, 123, 255, 0.25);
 }
-.btn::after {
+
+/* 光泽扫过效果 */
+.btn::before {
   content: "";
   position: absolute;
   left: -100%;
   top: 0;
   width: 100%;
   height: 100%;
-  background: rgba(255,255,255,0.15);
-  transform: skewX(-15deg);
-  transition: left .3s ease;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  transition: left 0.5s ease;
+  pointer-events: none;
 }
-.btn:hover::after {
+
+.btn:hover:not(:disabled)::before {
   left: 100%;
 }
 
@@ -235,17 +241,26 @@ body {
 
 .btn-secondary:hover:not(:disabled) {
   background: var(--border);
-  transform: translateY(-1px);
+  transform: translateY(-1px) scale(1.02);
+}
+
+.btn-secondary:active:not(:disabled) {
+  transform: scale(0.98);
 }
 
 .btn-danger {
-  background: var(--danger);
+  background: linear-gradient(135deg, var(--danger) 0%, #dc2626 100%);
   color: #fff;
+  box-shadow: 0 2px 8px rgba(240, 62, 62, 0.25);
 }
 
 .btn-danger:hover:not(:disabled) {
-  filter: brightness(1.1);
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(240, 62, 62, 0.4);
+}
+
+.btn-danger:active:not(:disabled) {
+  transform: translateY(0);
 }
 
 .btn-sm {
@@ -257,6 +272,16 @@ body {
   width: 44px;
   height: 44px;
   padding: 0;
+  position: relative;
+}
+
+/* 图标按钮悬停旋转效果 */
+.btn-icon:hover:not(:disabled) {
+  transform: translateY(-2px) rotate(5deg);
+}
+
+.btn-icon:active:not(:disabled) {
+  transform: scale(0.95);
 }
 
 /* 输入框样式 */
@@ -370,10 +395,319 @@ body {
 
 .spinning {
   animation: spin 1s linear infinite;
+  display: inline-block;
 }
 
 .pulsing {
   animation: pulse 2s ease-in-out infinite;
+}
+
+/* ========== 增强图标互动效果 ========== */
+
+/* SVG 图标通用过渡 */
+.btn svg,
+.icon-svg,
+button svg {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* SVG stroke 图标优化 */
+svg[stroke] {
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* 确保 SVG 图标垂直居中 */
+.btn svg {
+  display: block;
+  flex-shrink: 0;
+}
+
+/* 图标按钮中的 SVG 优化 */
+.btn-icon svg {
+  margin: auto;
+}
+
+/* 刷新按钮特殊悬停 - 半圈旋转预览 */
+.btn:has(span:contains('🔄')):hover span:first-child,
+button:has(.spinning):not(:disabled):hover svg {
+  transform: rotate(180deg);
+}
+
+/* 复制按钮悬停 - 轻微上浮 */
+.btn-copy:hover,
+.btn-copy-code:hover,
+.copy-icon-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+
+.btn-copy:hover svg,
+.btn-copy-code:hover svg,
+.copy-icon-btn:hover:not(:disabled) svg {
+  transform: scale(1.15) translateY(-1px);
+}
+
+/* 复制按钮成功反馈 */
+.copy-icon-btn.success-anim svg,
+.btn-copy-code.success-anim svg {
+  animation: check-pop 0.5s ease;
+}
+
+@keyframes check-pop {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.3) rotate(-10deg); }
+}
+
+/* 删除按钮悬停 - 摇摆警告 */
+.btn-delete:hover:not(:disabled) {
+  animation: shake-warning 0.4s ease;
+}
+
+@keyframes shake-warning {
+  0%, 100% { transform: translateX(0) rotate(0deg); }
+  25% { transform: translateX(-2px) rotate(-3deg); }
+  75% { transform: translateX(2px) rotate(3deg); }
+}
+
+.btn-delete:hover svg,
+.btn-danger:hover:not(:disabled) svg {
+  transform: scale(1.1);
+  filter: drop-shadow(0 2px 4px rgba(240, 62, 62, 0.3));
+}
+
+/* 图标点击弹跳反馈 */
+@keyframes icon-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+.btn:active:not(:disabled) svg {
+  animation: icon-bounce 0.3s ease;
+}
+
+.btn-icon:active:not(:disabled) {
+  animation: icon-bounce 0.3s ease;
+}
+
+/* 成功状态图标检查动画 */
+@keyframes icon-check-in {
+  0% {
+    transform: scale(0) rotate(-45deg);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2) rotate(0deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+.btn.success-anim svg,
+.btn.success-anim span:first-child {
+  animation: icon-check-in 0.5s ease;
+}
+
+/* 图标脉冲效果（吸引注意） */
+@keyframes icon-pulse-glow {
+  0%, 100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 0 transparent);
+  }
+  50% {
+    transform: scale(1.08);
+    filter: drop-shadow(0 0 6px currentColor);
+  }
+}
+
+.btn-icon.pulse {
+  animation: icon-pulse-glow 2s ease infinite;
+}
+
+/* 垃圾桶特殊摇晃效果 */
+.btn-delete.trash-anim,
+.btn-danger.trash-anim {
+  animation: trash-shake 0.5s ease;
+}
+
+@keyframes trash-shake {
+  0%, 100% { transform: rotate(0deg); }
+  10%, 30%, 50% { transform: rotate(-8deg); }
+  20%, 40%, 60% { transform: rotate(8deg); }
+}
+
+/* 按钮组图标间距优化 */
+.header-actions.icon-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.header-actions.icon-row .btn-icon {
+  flex-shrink: 0;
+}
+
+/* Emoji 图标增强（作为 SVG 的备选） */
+.btn span:first-child:not(.btn-text) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1em;
+  transition: transform 0.3s ease;
+}
+
+.btn:hover:not(:disabled) span:first-child:not(.btn-text) {
+  transform: scale(1.1);
+}
+
+/* 特定 Emoji 的特殊效果 */
+/* 刷新图标 */
+.btn:hover:not(:disabled) span:contains('🔄') {
+  transform: rotate(180deg);
+}
+
+/* 垃圾桶图标 */
+.btn:hover:not(:disabled) span:contains('🗑️'),
+.btn:hover:not(:disabled) span:contains('🧹') {
+  transform: scale(1.1) rotate(8deg);
+}
+
+/* 复制图标 */
+.btn:hover:not(:disabled) span:contains('📋') {
+  transform: scale(1.15) translateY(-2px);
+}
+
+/* 设置图标 - 旋转动画 */
+.btn:hover:not(:disabled) span:contains('⚙️') {
+  transform: rotate(90deg);
+}
+
+.settings-btn:hover:not(:disabled) svg {
+  transform: rotate(90deg) scale(1.1);
+}
+
+.settings-btn:active:not(:disabled) svg {
+  transform: rotate(180deg) scale(1);
+  transition: transform 0.3s ease;
+}
+
+/* 加载状态的图标脉冲 */
+.btn[disabled] span:first-child,
+.btn.loading span:first-child {
+  animation: pulse 1.5s ease infinite;
+  opacity: 0.7;
+}
+
+/* ========== 特定按钮增强效果 ========== */
+
+/* 生成按钮 - 闪光效果 */
+.generate-btn:not(:disabled) svg {
+  filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.6));
+}
+
+.generate-btn:hover:not(:disabled) svg {
+  transform: scale(1.15);
+  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.9));
+  animation: sparkle 1.5s ease infinite;
+}
+
+.generate-btn:active:not(:disabled) svg {
+  transform: scale(1);
+}
+
+@keyframes sparkle {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; transform: scale(1.2); }
+}
+
+/* 生成按钮成功后的庆祝动画 */
+.generate-btn.success-anim svg {
+  animation: celebrate 0.6s ease;
+}
+
+@keyframes celebrate {
+  0% { transform: scale(1) rotate(0deg); }
+  25% { transform: scale(1.3) rotate(-15deg); }
+  50% { transform: scale(1.2) rotate(15deg); }
+  75% { transform: scale(1.3) rotate(-10deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+
+/* 生成按钮加载动画 */
+.loading-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+/* 删除邮箱按钮悬停效果 */
+.delete-email-btn:hover:not(:disabled) svg,
+.delete-msg-btn:hover:not(:disabled) svg {
+  transform: scale(1.1) rotate(8deg);
+  filter: drop-shadow(0 2px 4px rgba(220, 38, 38, 0.4));
+}
+
+/* 删除消息按钮特殊效果 */
+.delete-msg-btn {
+  padding: 6px 12px !important;
+  font-size: 0.85rem;
+}
+
+.delete-msg-btn:hover:not(:disabled) {
+  animation: shake-warning 0.4s ease;
+}
+
+/* 清空按钮特效 */
+.clear-all-btn:hover:not(:disabled) svg {
+  transform: scale(1.1) rotate(45deg);
+}
+
+.sweep-icon-btn:hover:not(:disabled) svg {
+  animation: sweep-motion 0.6s ease;
+}
+
+@keyframes sweep-motion {
+  0%, 100% { transform: translateX(0) rotate(0deg); }
+  25% { transform: translateX(-3px) rotate(-8deg); }
+  50% { transform: translateX(3px) rotate(8deg); }
+  75% { transform: translateX(-2px) rotate(-5deg); }
+}
+
+/* 刷新按钮特效 */
+.btn:has(span.spinning) {
+  pointer-events: none;
+}
+
+.refresh-btn:hover:not(:disabled) svg {
+  transform: rotate(180deg);
+}
+
+.refresh-btn:active:not(:disabled) svg {
+  transform: rotate(360deg);
+  transition: transform 0.6s ease;
+}
+
+/* 分页按钮箭头动画 */
+.pagination-btn:hover:not(:disabled) svg {
+  animation: arrow-slide 0.6s ease infinite;
+}
+
+.pagination-btn:first-child:hover:not(:disabled) svg {
+  animation: arrow-slide-left 0.6s ease infinite;
+}
+
+@keyframes arrow-slide {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(4px); }
+}
+
+@keyframes arrow-slide-left {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(-4px); }
 }
 
 /* 响应式设计 */

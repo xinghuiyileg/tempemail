@@ -33,8 +33,8 @@ export default async function emailRoutes(request, env, ctx) {
   // POST /create - 创建临时邮箱（可带 prefix 和 domain）
   if (path === '/create' && method === 'POST') {
     try {
-      let configuredDomains = parseDomains(env.DOMAIN_NAME || 'yourdomain.com')
-      if (configuredDomains.length === 0) configuredDomains = ['yourdomain.com']
+      // 从配置表优先读取域名，其次回退到环境变量
+      let configuredDomains = await getConfiguredDomains(env)
 
       const targetEmail = env.TARGET_EMAIL || await getTargetEmail(env)
       if (!targetEmail) {
@@ -270,6 +270,23 @@ async function getTargetEmail(env) {
   } catch (error) {
     console.error('Failed to get target email:', error)
     return null
+  }
+}
+
+// 从配置中获取域名列表（优先 DB，其次 ENV）
+async function getConfiguredDomains(env) {
+  try {
+    const row = await env.DB.prepare(`
+      SELECT config_value FROM config WHERE config_key = 'domain_name'
+    `).first()
+    const fromDb = row?.config_value
+    let list = parseDomains(fromDb || env.DOMAIN_NAME || 'yourdomain.com')
+    if (list.length === 0) list = ['yourdomain.com']
+    return list
+  } catch (e) {
+    let list = parseDomains(env.DOMAIN_NAME || 'yourdomain.com')
+    if (list.length === 0) list = ['yourdomain.com']
+    return list
   }
 }
 

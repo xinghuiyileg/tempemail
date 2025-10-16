@@ -14,25 +14,51 @@
             :disabled="selectedIds.length === 0"
             @click="batchDelete"
           >
-            🗑️ {{ batchDelLabel }}
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14z"/>
+              <path d="M10 11v6m4-6v6"/>
+            </svg>
+            <span>{{ batchDelLabel }}</span>
           </button>
           <button
             v-if="currentEmail && messages.length > 0"
             ref="clearBtnRef"
-            class="btn btn-sm btn-danger"
+            class="btn btn-sm btn-danger clear-all-btn"
             @click="clearMessages"
           >
-            🗑️ {{ clearLabel }}
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="m4.93 4.93 14.14 14.14"/>
+            </svg>
+            <span>{{ clearLabel }}</span>
           </button>
           <button
             v-if="currentEmail"
             ref="refreshBtnRef"
-            class="btn btn-sm btn-secondary"
+            class="btn btn-sm btn-secondary refresh-btn"
             @click="refreshMessages"
             :disabled="isRefreshing"
+            title="刷新邮件列表"
+            aria-label="刷新邮件列表"
           >
-            <span :class="{ spinning: isRefreshing }">🔄</span>
-            {{ refreshLabel }}
+            <svg 
+              viewBox="0 0 24 24" 
+              width="16" 
+              height="16" 
+              fill="none" 
+              stroke="currentColor" 
+              stroke-width="2" 
+              stroke-linecap="round" 
+              stroke-linejoin="round"
+              :class="{ spinning: isRefreshing }"
+              style="transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);"
+            >
+              <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+              <path d="M3 3v5h5"/>
+              <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/>
+              <path d="M16 21h5v-5"/>
+            </svg>
+            <span>{{ refreshLabel }}</span>
           </button>
         </div>
       </div>
@@ -77,13 +103,22 @@
               @click.stop="copyCode(message.verification_code)"
               title="复制验证码"
             >
-              📋
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+              </svg>
             </button>
           </div>
 
           <div v-else class="preview">{{ getPreview(message) }}</div>
           <div class="row-actions" @click.stop>
-            <button class="btn btn-sm btn-secondary" @click="deleteOne(message)">删除</button>
+            <button class="btn btn-sm btn-danger delete-msg-btn" @click="deleteOne(message)" title="删除此邮件">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14z"/>
+                <path d="M10 11v6m4-6v6"/>
+              </svg>
+              <span>删除</span>
+            </button>
           </div>
         </div>
       </div>
@@ -91,22 +126,65 @@
       <!-- 分页 -->
       <div v-if="totalPages > 1" class="pagination">
         <button
-          class="btn btn-sm btn-secondary"
+          class="btn btn-sm btn-secondary pagination-btn"
+          @click="firstPage"
+          :disabled="currentPage === 1"
+          title="首页"
+        >
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m11 17-5-5 5-5M18 17l-5-5 5-5"/>
+          </svg>
+        </button>
+        
+        <button
+          class="btn btn-sm btn-secondary pagination-btn"
           @click="prevPage"
           :disabled="currentPage === 1"
+          title="上一页"
         >
-          ← 上一页
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m15 18-6-6 6-6"/>
+          </svg>
         </button>
-        <span class="page-info">
-          {{ currentPage }} / {{ totalPages }}
-        </span>
+        
+        <div class="page-numbers">
+          <button
+            v-for="page in visiblePages"
+            :key="page"
+            class="page-number-btn"
+            :class="{ active: page === currentPage }"
+            @click="goToPage(page)"
+            :disabled="page === '...'"
+          >
+            {{ page }}
+          </button>
+        </div>
+        
         <button
-          class="btn btn-sm btn-secondary"
+          class="btn btn-sm btn-secondary pagination-btn"
           @click="nextPage"
           :disabled="currentPage === totalPages"
+          title="下一页"
         >
-          下一页 →
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m9 18 6-6-6-6"/>
+          </svg>
         </button>
+        
+        <button
+          class="btn btn-sm btn-secondary pagination-btn"
+          @click="lastPage"
+          :disabled="currentPage === totalPages"
+          title="末页"
+        >
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m13 17 5-5-5-5M6 17l5-5-5-5"/>
+          </svg>
+        </button>
+        
+        <span class="page-info-detail">
+          共 {{ totalCount }} 封邮件，第 {{ currentPage }}/{{ totalPages }} 页
+        </span>
       </div>
     </div>
   </div>
@@ -166,11 +244,19 @@ const refreshMessages = async () => {
 }
 
 const openMessage = async (message) => {
-  selectedMessage.value = message
-  
-  // 标记为已读
-  if (!message.is_read) {
-    await messageStore.markAsRead(message.id)
+  try {
+    // 获取完整内容（包含 body_html/body_text）
+    const full = await messageStore.getMessage(message.id)
+    selectedMessage.value = full || message
+
+    // 标记为已读
+    if (!message.is_read) {
+      await messageStore.markAsRead(message.id)
+      message.is_read = true
+    }
+  } catch (e) {
+    // 回退显示列表中的简要内容
+    selectedMessage.value = message
   }
 }
 
@@ -234,6 +320,36 @@ const batchDelete = async () => {
   }
 }
 
+// 计算可见的页码
+const visiblePages = computed(() => {
+  const pages = []
+  const total = totalPages.value
+  const current = currentPage.value
+  
+  if (total <= 7) {
+    // 总页数 ≤ 7，显示全部页码
+    for (let i = 1; i <= total; i++) {
+      pages.push(i)
+    }
+  } else {
+    // 总页数 > 7，显示省略号
+    pages.push(1)
+    
+    if (current <= 3) {
+      // 当前页在前面
+      pages.push(2, 3, 4, '...', total)
+    } else if (current >= total - 2) {
+      // 当前页在后面
+      pages.push('...', total - 3, total - 2, total - 1, total)
+    } else {
+      // 当前页在中间
+      pages.push('...', current - 1, current, current + 1, '...', total)
+    }
+  }
+  
+  return pages
+})
+
 const prevPage = () => {
   if (currentPage.value > 1) {
     messageStore.setPage(currentPage.value - 1)
@@ -243,6 +359,24 @@ const prevPage = () => {
 const nextPage = () => {
   if (currentPage.value < totalPages.value) {
     messageStore.setPage(currentPage.value + 1)
+  }
+}
+
+const firstPage = () => {
+  if (currentPage.value !== 1) {
+    messageStore.setPage(1)
+  }
+}
+
+const lastPage = () => {
+  if (currentPage.value !== totalPages.value) {
+    messageStore.setPage(totalPages.value)
+  }
+}
+
+const goToPage = (page) => {
+  if (typeof page === 'number' && page !== currentPage.value) {
+    messageStore.setPage(page)
   }
 }
 
@@ -455,15 +589,107 @@ watch(currentEmail, async (val) => {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 16px;
+  gap: 8px;
   margin-top: 20px;
-  padding-top: 16px;
-  border-top: 1px solid var(--border);
+  padding-top: 20px;
+  border-top: 1.5px solid var(--border);
+  flex-wrap: wrap;
 }
 
+.page-numbers {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.page-number-btn {
+  min-width: 36px;
+  height: 36px;
+  padding: 0 10px;
+  border: 1.5px solid var(--border);
+  background: var(--muted);
+  color: var(--text-main);
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.page-number-btn:hover:not(:disabled) {
+  border-color: var(--brand);
+  background: rgba(108, 123, 255, 0.1);
+  transform: translateY(-1px);
+}
+
+.page-number-btn.active {
+  background: linear-gradient(135deg, var(--brand) 0%, var(--brand-2) 100%);
+  color: #fff;
+  border-color: var(--brand);
+  box-shadow: 0 2px 8px rgba(108, 123, 255, 0.3);
+}
+
+.page-number-btn:disabled {
+  cursor: default;
+  opacity: 0.5;
+  border: none;
+  background: transparent;
+}
+
+.pagination-btn {
+  min-width: 36px !important;
+  height: 36px;
+  padding: 0 10px !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pagination-btn svg {
+  margin: 0 !important;
+}
+
+.page-info-detail {
+  font-size: 0.85rem;
+  color: var(--text-sub);
+  margin-left: 8px;
+  white-space: nowrap;
+}
+
+/* 旧的 page-info 样式（保留兼容） */
 .page-info {
   color: var(--text-sub);
   font-weight: 600;
+}
+
+/* 响应式 - 移动端 */
+@media (max-width: 768px) {
+  .pagination {
+    gap: 6px;
+  }
+  
+  .page-numbers {
+    gap: 4px;
+  }
+  
+  .page-number-btn {
+    min-width: 32px;
+    height: 32px;
+    padding: 0 8px;
+    font-size: 0.85rem;
+  }
+  
+  .pagination-btn {
+    min-width: 32px !important;
+    height: 32px;
+  }
+  
+  .page-info-detail {
+    width: 100%;
+    text-align: center;
+    margin: 4px 0 0 0;
+    font-size: 0.8rem;
+  }
 }
 </style>
 

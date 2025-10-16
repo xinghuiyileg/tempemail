@@ -12,27 +12,36 @@
           title="删除选中"
           aria-label="删除选中"
         >
-          🗑️
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14z"/>
+            <path d="M10 11v6m4-6v6"/>
+          </svg>
         </button>
         <button
           ref="copyBtnRef"
-          class="btn btn-sm btn-secondary btn-icon"
+          class="btn btn-sm btn-secondary btn-icon copy-icon-btn"
           :disabled="!currentEmailId"
           @click="copyCurrent"
           :title="copyLabel"
           :aria-label="copyLabel"
         >
-          📋
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+          </svg>
         </button>
         <button
           v-if="emails.length > 0"
           ref="delAllBtnRef"
-          class="btn btn-sm btn-danger btn-icon"
+          class="btn btn-sm btn-danger btn-icon sweep-icon-btn"
           @click="deleteAll"
           :title="delAllLabel"
           :aria-label="delAllLabel"
         >
-          🧹
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14z"/>
+            <path d="M14 11l-3 3m0 0l-3-3m3 3v-6"/>
+          </svg>
         </button>
         </div>
       </div>
