@@ -288,23 +288,24 @@ const copyCode = async (code) => {
 }
 
 const getPreview = (message) => {
-  let text = message.body_text || ''
+  // 优先使用 body_html，然后 body_text
+  let content = message.body_html || message.body_text || ''
   
-  // 如果没有纯文本，从 HTML 中提取
-  if (!text && message.body_html) {
-    // 移除 HTML 标签，提取纯文本
-    text = message.body_html
-      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '') // 移除样式
-      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '') // 移除脚本
-      .replace(/<[^>]+>/g, ' ') // 移除所有标签
-      .replace(/&nbsp;/g, ' ') // 替换空格实体
-      .replace(/&lt;/g, '<') // 解码实体
-      .replace(/&gt;/g, '>')
-      .replace(/&amp;/g, '&')
-      .replace(/&quot;/g, '"')
-      .replace(/\s+/g, ' ') // 合并多个空格
-      .trim()
-  }
+  // 始终清理 HTML 标签（因为 body_text 也可能包含 HTML）
+  let text = content
+    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '') // 移除样式
+    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '') // 移除脚本
+    .replace(/<br\s*\/?>/gi, ' ') // br 转空格
+    .replace(/<\/p>/gi, ' ') // 段落结束加空格
+    .replace(/<[^>]+>/g, '') // 移除所有 HTML 标签
+    .replace(/&nbsp;/g, ' ') // 替换空格实体
+    .replace(/&lt;/g, '<') // 解码 HTML 实体
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\s+/g, ' ') // 合并多个空格
+    .trim()
   
   return text.substring(0, 100) + (text.length > 100 ? '...' : '')
 }
