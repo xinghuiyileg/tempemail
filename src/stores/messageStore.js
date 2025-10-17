@@ -9,7 +9,7 @@ export const useMessageStore = defineStore('message', () => {
   const totalPages = ref(1)
   const totalCount = ref(0)
   const loading = ref(false)
-  const pageSize = 20
+  const pageSize = 4
 
   const verificationCodeCount = computed(() => {
     return messages.value.filter(m => m.verification_code).length
@@ -19,15 +19,28 @@ export const useMessageStore = defineStore('message', () => {
   const loadMessages = async (emailId, page = 1) => {
     if (!emailId) return
 
+    console.log('loadMessages called: emailId=', emailId, 'page=', page, 'pageSize=', pageSize)
     loading.value = true
     try {
       const response = await messageAPI.list(emailId, page, pageSize)
+      console.log('API full response:', response)
+      console.log('API response.data:', response.data)
       const data = response.data.data
+      console.log('Extracted data:', data)
+      console.log('Pagination object:', JSON.stringify(data.pagination, null, 2))
+      console.log('Pagination.page value:', data.pagination?.page, 'type:', typeof data.pagination?.page)
       
       messages.value = data.messages || []
       currentPage.value = data.pagination?.page || 1
       totalPages.value = data.pagination?.total_pages || 1
       totalCount.value = data.pagination?.total || 0
+
+      console.log('Messages loaded:', {
+        count: messages.value.length,
+        currentPage: currentPage.value,
+        totalPages: totalPages.value,
+        totalCount: totalCount.value
+      })
 
       // 更新邮箱的邮件数量
       const emailStore = useEmailStore()
@@ -82,9 +95,18 @@ export const useMessageStore = defineStore('message', () => {
 
   // 设置页码
   const setPage = async (page) => {
+    console.log('setPage called:', page)
     const emailStore = useEmailStore()
+    console.log('currentEmail:', emailStore.currentEmail)
     if (emailStore.currentEmail) {
-      await loadMessages(emailStore.currentEmail.id, page)
+      try {
+        await loadMessages(emailStore.currentEmail.id, page)
+      } catch (error) {
+        console.error('Failed to set page:', error)
+        throw error
+      }
+    } else {
+      console.warn('No current email selected')
     }
   }
 

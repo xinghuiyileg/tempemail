@@ -6,13 +6,21 @@ export const useEmailStore = defineStore('email', () => {
   const emails = ref([])
   const currentEmail = ref(null)
   const loading = ref(false)
+  const currentPage = ref(1)
+  const totalPages = ref(1)
+  const totalCount = ref(0)
+  const pageSize = 5
 
   // 加载邮箱列表
-  const loadEmails = async () => {
+  const loadEmails = async (page = 1) => {
     loading.value = true
     try {
-      const response = await emailAPI.list()
-      emails.value = response.data.data || []
+      const response = await emailAPI.list(page, pageSize)
+      const data = response.data.data
+      emails.value = data.emails || []
+      currentPage.value = data.pagination?.page || 1
+      totalPages.value = data.pagination?.total_pages || 1
+      totalCount.value = data.pagination?.total || 0
       
       // 如果有当前邮箱，更新它
       if (currentEmail.value) {
@@ -104,6 +112,9 @@ export const useEmailStore = defineStore('email', () => {
     emails,
     currentEmail,
     loading,
+    currentPage,
+    totalPages,
+    totalCount,
     loadEmails,
     createEmail,
     deleteEmail,

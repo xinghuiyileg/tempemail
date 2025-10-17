@@ -15,20 +15,30 @@
       </div>
       <button
         ref="genBtnRef"
-        class="btn btn-primary"
+        class="btn btn-primary generate-btn"
         @click="onGenerate"
         :disabled="isGenerating"
+        :aria-label="isGenerating ? '正在生成...' : '生成新邮箱'"
       >
-        <span v-if="isGenerating" class="spinning">⏳</span>
-        <span v-else>✨</span>
-        {{ genLabel }}
+        <svg v-if="!isGenerating" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="transition: all 0.3s ease;">
+          <path d="M12 5v14m-7-7h14"/>
+          <circle cx="12" cy="12" r="10"/>
+        </svg>
+        <span v-else class="loading-spinner"></span>
+        <span>{{ genLabel }}</span>
       </button>
       <button
         v-if="currentEmail"
-        class="btn btn-ghost"
+        class="btn btn-ghost delete-email-btn"
         @click="deleteCurrentEmail"
+        title="删除当前邮箱"
+        aria-label="删除当前邮箱"
       >
-        🗑️ 删除当前邮箱
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14z"/>
+          <path d="M10 11v6m4-6v6"/>
+        </svg>
+        <span>删除当前邮箱</span>
       </button>
     </div>
     </div>

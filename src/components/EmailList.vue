@@ -1,7 +1,7 @@
 <template>
   <div class="card">
     <div class="card-body">
-      <div class="list-header">
+      <div class="list-header" ref="emailListTopRef">
         <h2>📧 临时邮箱列表</h2>
         <div class="header-actions icon-row">
         <button
@@ -12,27 +12,36 @@
           title="删除选中"
           aria-label="删除选中"
         >
-          🗑️
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14z"/>
+            <path d="M10 11v6m4-6v6"/>
+          </svg>
         </button>
         <button
           ref="copyBtnRef"
-          class="btn btn-sm btn-secondary btn-icon"
+          class="btn btn-sm btn-secondary btn-icon copy-icon-btn"
           :disabled="!currentEmailId"
           @click="copyCurrent"
           :title="copyLabel"
           :aria-label="copyLabel"
         >
-          📋
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+          </svg>
         </button>
         <button
           v-if="emails.length > 0"
           ref="delAllBtnRef"
-          class="btn btn-sm btn-danger btn-icon"
+          class="btn btn-sm btn-danger btn-icon sweep-icon-btn"
           @click="deleteAll"
           :title="delAllLabel"
           :aria-label="delAllLabel"
         >
-          🧹
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14z"/>
+            <path d="M14 11l-3 3m0 0l-3-3m3 3v-6"/>
+          </svg>
         </button>
         </div>
       </div>
@@ -43,7 +52,10 @@
         <p class="text-muted">点击上方按钮创建邮箱</p>
       </div>
 
-      <div v-else class="email-items">
+      <div v-else class="email-items has-loading-overlay">
+        <div v-if="emailLoading" class="loading-overlay">
+          <div class="loading-spinner"></div>
+        </div>
         <div
           v-for="email in emails"
           :key="email.id"
@@ -82,6 +94,70 @@
           </div>
         </div>
       </div>
+
+      <!-- 分页（与收件箱统一样式与交互） -->
+      <div v-if="emailTotalPages > 1" class="pagination">
+        <button
+          class="btn btn-sm btn-secondary pagination-btn"
+          @click="firstEmailPage"
+          :disabled="emailCurrentPage === 1 || emailLoading"
+          title="首页"
+        >
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m11 17-5-5 5-5M18 17l-5-5 5-5"/>
+          </svg>
+        </button>
+
+        <button
+          class="btn btn-sm btn-secondary pagination-btn"
+          @click="prevEmailPage"
+          :disabled="emailCurrentPage === 1 || emailLoading"
+          title="上一页"
+        >
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m15 18-6-6 6-6"/>
+          </svg>
+        </button>
+
+        <div class="page-numbers">
+          <button
+            v-for="page in emailVisiblePages"
+            :key="page"
+            class="page-number-btn"
+            :class="{ active: page === emailCurrentPage }"
+            @click="goEmailPage(page)"
+            :disabled="page === '...' || emailLoading"
+          >
+            {{ page }}
+          </button>
+        </div>
+
+        <button
+          class="btn btn-sm btn-secondary pagination-btn"
+          @click="nextEmailPage"
+          :disabled="emailCurrentPage === emailTotalPages || emailLoading"
+          title="下一页"
+        >
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m9 18 6-6-6-6"/>
+          </svg>
+        </button>
+
+        <button
+          class="btn btn-sm btn-secondary pagination-btn"
+          @click="lastEmailPage"
+          :disabled="emailCurrentPage === emailTotalPages || emailLoading"
+          title="末页"
+        >
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m13 17 5-5-5-5M6 17l5-5-5-5"/>
+          </svg>
+        </button>
+
+        <span class="page-info-detail">
+          共 {{ emailTotalCount }} 个邮箱，第 {{ emailCurrentPage }} / {{ emailTotalPages }} 页
+        </span>
+      </div>
     </div>
   </div>
 </template>
@@ -102,6 +178,41 @@ const { showNotification } = useNotification()
 const emails = computed(() => emailStore.emails)
 const currentEmailId = computed(() => emailStore.currentEmail?.id)
 const currentEmailAddr = computed(() => emailStore.currentEmail?.email)
+const emailCurrentPage = computed(() => emailStore.currentPage)
+const emailTotalPages = computed(() => emailStore.totalPages)
+const emailTotalCount = computed(() => emailStore.totalCount)
+const emailLoading = computed(() => emailStore.loading)
+
+const emailListTopRef = ref(null)
+const smoothScrollToTop = () => {
+  try {
+    if (emailListTopRef.value) {
+      emailListTopRef.value.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    } else {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  } catch (_) {}
+}
+
+// 计算可见页码（与收件箱一致）
+const emailVisiblePages = computed(() => {
+  const pages = []
+  const total = emailTotalPages.value
+  const current = emailCurrentPage.value
+  if (total <= 7) {
+    for (let i = 1; i <= total; i++) pages.push(i)
+  } else {
+    pages.push(1)
+    if (current <= 3) {
+      pages.push(2, 3, 4, '...', total)
+    } else if (current >= total - 2) {
+      pages.push('...', total - 3, total - 2, total - 1, total)
+    } else {
+      pages.push('...', current - 1, current, current + 1, '...', total)
+    }
+  }
+  return pages
+})
 
 // 动态按钮文案
 const copyBtnRef = ref(null)
@@ -113,6 +224,52 @@ const selectedIds = ref([])
 const selectEmail = (email) => {
   emailStore.setCurrentEmail(email)
   messageStore.loadMessages(email.id)
+}
+
+const goEmailPage = async (page) => {
+  if (typeof page !== 'number') return
+  if (page < 1 || page > emailTotalPages.value) return
+  if (page === emailCurrentPage.value) return
+  try {
+    await emailStore.loadEmails(page)
+    smoothScrollToTop()
+  } catch (_) {}
+}
+
+const prevEmailPage = async () => {
+  if (emailCurrentPage.value > 1) {
+    try {
+      await emailStore.loadEmails(emailCurrentPage.value - 1)
+      smoothScrollToTop()
+    } catch (_) {}
+  }
+}
+
+const nextEmailPage = async () => {
+  if (emailCurrentPage.value < emailTotalPages.value) {
+    try {
+      await emailStore.loadEmails(emailCurrentPage.value + 1)
+      smoothScrollToTop()
+    } catch (_) {}
+  }
+}
+
+const firstEmailPage = async () => {
+  if (emailCurrentPage.value !== 1) {
+    try {
+      await emailStore.loadEmails(1)
+      smoothScrollToTop()
+    } catch (_) {}
+  }
+}
+
+const lastEmailPage = async () => {
+  if (emailCurrentPage.value !== emailTotalPages.value) {
+    try {
+      await emailStore.loadEmails(emailTotalPages.value)
+      smoothScrollToTop()
+    } catch (_) {}
+  }
 }
 
 const deleteEmail = async (email, evt) => {
@@ -288,6 +445,107 @@ const copyCurrent = async () => {
   color: var(--text-sub);
   padding-top: 8px;
   border-top: 1px solid var(--border);
+}
+
+/* 分页样式（与收件箱统一） */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1.5px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.page-numbers {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.page-number-btn {
+  min-width: 36px;
+  height: 36px;
+  padding: 0 10px;
+  border: 1.5px solid var(--border);
+  background: var(--muted);
+  color: var(--text-main);
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.page-number-btn:hover:not(:disabled) {
+  border-color: var(--brand);
+  background: rgba(108, 123, 255, 0.1);
+  transform: translateY(-1px);
+}
+
+.page-number-btn.active {
+  background: linear-gradient(135deg, var(--brand) 0%, var(--brand-2) 100%);
+  color: #fff;
+  border-color: var(--brand);
+  box-shadow: 0 2px 8px rgba(108, 123, 255, 0.3);
+}
+
+.page-number-btn:disabled {
+  cursor: default;
+  opacity: 0.5;
+  border: none;
+  background: transparent;
+}
+
+.pagination-btn {
+  min-width: 36px !important;
+  height: 36px;
+  padding: 0 10px !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pagination-btn svg {
+  margin: 0 !important;
+}
+
+.page-info-detail {
+  font-size: 0.85rem;
+  color: var(--text-sub);
+  margin-left: 8px;
+  white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  .pagination {
+    gap: 6px;
+  }
+
+  .page-numbers {
+    gap: 4px;
+  }
+
+  .page-number-btn {
+    min-width: 32px;
+    height: 32px;
+    padding: 0 8px;
+    font-size: 0.85rem;
+  }
+
+  .pagination-btn {
+    min-width: 32px !important;
+    height: 32px;
+  }
+
+  .page-info-detail {
+    width: 100%;
+    text-align: center;
+    margin: 4px 0 0 0;
+    font-size: 0.8rem;
+  }
 }
 </style>
 

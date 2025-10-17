@@ -39,7 +39,7 @@ export const emailAPI = {
   create: (params = {}) => apiClient.post('/emails/create', params),
   
   // 获取邮箱列表
-  list: () => apiClient.get('/emails/list'),
+  list: (page = 1, limit = 5) => apiClient.get('/emails/list', { params: { page, limit } }),
   
   // 删除邮箱
   delete: (id) => apiClient.delete(`/emails/${id}`),
@@ -51,7 +51,7 @@ export const emailAPI = {
 // 邮件消息相关API
 export const messageAPI = {
   // 获取邮件列表
-  list: (emailId, page = 1, limit = 20) => 
+  list: (emailId, page = 1, limit = 4) => 
     apiClient.get(`/emails/${emailId}/messages`, { params: { page, limit } }),
   
   // 获取邮件详情
