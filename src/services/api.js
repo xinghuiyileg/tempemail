@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { getUserId } from '@/utils/userManager'
 
 const API_BASE = import.meta.env.VITE_API_BASE || '/api'
 
@@ -14,7 +15,26 @@ const apiClient = axios.create({
 // 请求拦截器
 apiClient.interceptors.request.use(
   config => {
-    // 可以在这里添加 token 等认证信息
+    // 添加用户 ID（用于用户隔离）
+    const userId = getUserId()
+    config.headers['X-User-ID'] = userId
+    
+    // 添加认证 token（如果有）
+    const token = localStorage.getItem('auth_token')
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`
+    }
+    
+    // 添加管理员密码（仅配置更新接口需要）
+    if (config.url?.includes('/config') && 
+        (config.method === 'post' || config.method === 'put')) {
+      const adminPassword = localStorage.getItem('admin_password')
+      if (adminPassword) {
+        config.headers['X-Admin-Password'] = adminPassword
+        console.log('Admin password added to request')
+      }
+    }
+    
     return config
   },
   error => {

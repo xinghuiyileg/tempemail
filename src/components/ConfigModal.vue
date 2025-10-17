@@ -8,7 +8,52 @@
         </div>
 
         <div class="modal-body">
-          <div class="config-section">
+          <!-- 管理员认证区域 -->
+          <div v-if="needAdminLogin" class="admin-login-section">
+            <div class="info-box warning">
+              <strong>🔒 需要管理员权限</strong>
+              <p>修改系统配置需要管理员密码</p>
+            </div>
+            
+            <div class="form-group">
+              <label>
+                <span class="label-text">管理员密码</span>
+              </label>
+              <div class="password-input-group">
+                <input 
+                  v-model="adminPasswordInput"
+                  :type="showAdminPassword ? 'text' : 'password'"
+                  placeholder="请输入管理员密码"
+                  class="form-input"
+                  @keyup.enter="handleAdminLogin"
+                />
+                <button 
+                  class="toggle-password-btn"
+                  @click="showAdminPassword = !showAdminPassword"
+                  type="button"
+                >
+                  {{ showAdminPassword ? '👁️' : '👁️‍🗨️' }}
+                </button>
+              </div>
+              <button 
+                class="btn btn-primary"
+                style="margin-top: 10px; width: 100%;"
+                @click="handleAdminLogin"
+                :disabled="!adminPasswordInput"
+              >
+                验证管理员身份
+              </button>
+            </div>
+          </div>
+
+          <!-- 管理员徽章 -->
+          <div v-else-if="adminStore.isAdmin" class="admin-badge">
+            <span>👑 管理员模式</span>
+            <button class="btn-link" @click="handleAdminLogout">退出</button>
+          </div>
+
+          <!-- 配置表单 -->
+          <div v-if="!needAdminLogin" class="config-section">
             <h4>基础配置</h4>
             <div class="form-group">
               <label>
@@ -20,6 +65,7 @@
                 type="text" 
                 placeholder="例如：example.com;mail.example.com"
                 class="form-input"
+                :disabled="!isAdminMode"
               />
               <div class="field-hint">💡 配置多个域名后，生成邮箱时可选择使用哪个域名</div>
             </div>
@@ -34,6 +80,7 @@
                 type="email" 
                 placeholder="your@qq.com"
                 class="form-input"
+                :disabled="!isAdminMode"
               />
             </div>
           </div>
@@ -50,6 +97,7 @@
                 type="password" 
                 placeholder="请输入 Cloudflare API Token"
                 class="form-input"
+                :disabled="!isAdminMode"
               />
             </div>
 
@@ -63,6 +111,7 @@
                 type="text" 
                 placeholder="32 位字符的 Zone ID"
                 class="form-input"
+                :disabled="!isAdminMode"
               />
             </div>
 
@@ -76,6 +125,7 @@
                 type="text" 
                 placeholder="32 位字符的 Account ID"
                 class="form-input"
+                :disabled="!isAdminMode"
               />
             </div>
           </div>
@@ -94,6 +144,7 @@
                 max="60"
                 placeholder="10"
                 class="form-input"
+                :disabled="!isAdminMode"
               />
             </div>
 
@@ -109,13 +160,15 @@
                 max="30"
                 placeholder="7"
                 class="form-input"
+                :disabled="!isAdminMode"
               />
             </div>
           </div>
 
-          <div class="config-tips">
+          <div v-if="!needAdminLogin" class="config-tips">
             <p>💡 提示：</p>
             <ul>
+              <li v-if="!isAdminMode">⚠️ 仅管理员可修改配置（当前为查看模式）</li>
               <li>配置修改后需要重启 Workers 才能生效</li>
               <li>API Token 等敏感信息已加密存储</li>
               <li>本地开发模式下，部分配置可能不生效</li>
@@ -123,9 +176,14 @@
           </div>
         </div>
 
-        <div class="modal-footer">
-          <button class="btn btn-secondary" @click="handleClose">取消</button>
-          <button class="btn btn-primary" @click="handleSave" :disabled="isSaving">
+        <div v-if="!needAdminLogin" class="modal-footer">
+          <button class="btn btn-secondary" @click="handleClose">{{ isAdminMode ? '取消' : '关闭' }}</button>
+          <button 
+            v-if="isAdminMode" 
+            class="btn btn-primary" 
+            @click="handleSave" 
+            :disabled="isSaving"
+          >
             <span v-if="isSaving" class="spinning">⏳</span>
             {{ isSaving ? '保存中...' : '保存配置' }}
           </button>
@@ -136,9 +194,11 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { configAPI } from '@/services/api'
 import { useNotification } from '@/composables/useNotification'
+import { useAdminStore } from '@/stores/adminStore'
+import { useConfigStore } from '@/stores/configStore'
 
 const props = defineProps({
   visible: {
@@ -150,8 +210,13 @@ const props = defineProps({
 const emit = defineEmits(['close', 'saved'])
 
 const { showNotification } = useNotification()
+const adminStore = useAdminStore()
+const configStore = useConfigStore()
 
 const isSaving = ref(false)
+const adminPasswordInput = ref('')
+const showAdminPassword = ref(false)
+
 const formData = ref({
   domain_name: '',
   target_qq_email: '',
@@ -162,9 +227,14 @@ const formData = ref({
   auto_delete_days: 7
 })
 
+// 计算属性
+const isAdminMode = computed(() => adminStore.isAdmin || !configStore.adminEnabled)
+const needAdminLogin = computed(() => configStore.adminEnabled && !adminStore.isAdmin)
+
 // 监听弹窗打开，加载配置
 watch(() => props.visible, async (newVal) => {
   if (newVal) {
+    adminStore.initAdmin()
     await loadConfig()
   }
 })
@@ -172,25 +242,56 @@ watch(() => props.visible, async (newVal) => {
 const loadConfig = async () => {
   try {
     const response = await configAPI.get()
-    const config = response.data.data
+    const data = response.data.data
     
     // 填充表单
     formData.value = {
-      domain_name: config.domain_name || '',
-      target_qq_email: config.target_qq_email || '',
-      cloudflare_api_token: config.cloudflare_api_token || '',
-      cloudflare_zone_id: config.cloudflare_zone_id || '',
-      cloudflare_account_id: config.cloudflare_account_id || '',
-      monitor_interval: parseInt(config.monitor_interval) || 10,
-      auto_delete_days: parseInt(config.auto_delete_days) || 7
+      domain_name: data.config?.domain_name || '',
+      target_qq_email: data.config?.target_qq_email || '',
+      cloudflare_api_token: data.config?.cloudflare_api_token || '',
+      cloudflare_zone_id: data.config?.cloudflare_zone_id || '',
+      cloudflare_account_id: data.config?.cloudflare_account_id || '',
+      monitor_interval: parseInt(data.config?.monitor_interval) || 10,
+      auto_delete_days: parseInt(data.config?.auto_delete_days) || 7
     }
+    
+    // 更新 configStore 中的管理员状态
+    configStore.isAdmin = data.isAdmin || false
+    configStore.adminEnabled = data.adminEnabled || false
   } catch (error) {
     console.error('加载配置失败:', error)
     showNotification('加载配置失败', 'error')
   }
 }
 
+const handleAdminLogin = async () => {
+  if (!adminPasswordInput.value) {
+    showNotification('请输入管理员密码', 'warning')
+    return
+  }
+
+  try {
+    adminStore.loginAdmin(adminPasswordInput.value)
+    showNotification('管理员身份验证成功', 'success')
+    await loadConfig()
+  } catch (error) {
+    showNotification('验证失败：' + error.message, 'error')
+  }
+}
+
+const handleAdminLogout = () => {
+  adminStore.logoutAdmin()
+  showNotification('已退出管理员模式', 'info')
+  emit('close')
+}
+
 const handleSave = async () => {
+  // 验证管理员权限
+  if (!isAdminMode.value) {
+    showNotification('需要管理员权限才能修改配置', 'error')
+    return
+  }
+
   // 验证必填项
   if (!formData.value.domain_name) {
     showNotification('请填写域名', 'warning')
@@ -210,7 +311,14 @@ const handleSave = async () => {
     emit('close')
   } catch (error) {
     console.error('保存配置失败:', error)
-    showNotification('保存配置失败：' + error.message, 'error')
+    
+    if (error.response?.status === 403 || error.response?.status === 401) {
+      showNotification('管理员密码错误或已过期', 'error')
+      adminStore.logoutAdmin()
+      await loadConfig()
+    } else {
+      showNotification('保存配置失败：' + error.message, 'error')
+    }
   } finally {
     isSaving.value = false
   }
@@ -412,6 +520,98 @@ const handleClose = () => {
   }
 }
 
+.admin-login-section {
+  padding: 20px;
+  background: var(--muted);
+  border-radius: 12px;
+  margin-bottom: 20px;
+}
+
+.admin-badge {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+  color: #000;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
+}
+
+.admin-badge span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-link {
+  background: transparent;
+  border: none;
+  color: #000;
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: 0.9em;
+  font-weight: 600;
+}
+
+.btn-link:hover {
+  opacity: 0.8;
+}
+
+.password-input-group {
+  display: flex;
+  gap: 8px;
+}
+
+.password-input-group input {
+  flex: 1;
+}
+
+.toggle-password-btn {
+  padding: 10px 14px;
+  background: var(--muted);
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1.2em;
+  transition: all 0.2s ease;
+}
+
+.toggle-password-btn:hover {
+  background: var(--border);
+}
+
+.info-box {
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.info-box.warning {
+  background: #fff3cd;
+  border: 2px solid #ffc107;
+  color: #856404;
+}
+
+.info-box strong {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 1.05em;
+}
+
+.info-box p {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.form-input:disabled {
+  background: var(--muted);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
 @media (max-width: 640px) {
   .modal-content {
     max-height: 90vh;
@@ -427,6 +627,11 @@ const handleClose = () => {
 
   .modal-footer .btn {
     width: 100%;
+  }
+  
+  .admin-badge {
+    flex-direction: column;
+    gap: 10px;
   }
 }
 </style>

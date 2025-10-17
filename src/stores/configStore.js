@@ -11,6 +11,8 @@ export const useConfigStore = defineStore('config', () => {
   })
   
   const loading = ref(false)
+  const isAdmin = ref(false)
+  const adminEnabled = ref(false)
 
   // 解析多域名配置（支持分号、中文分号、逗号）
   const domainList = computed(() => {
@@ -32,10 +34,19 @@ export const useConfigStore = defineStore('config', () => {
     loading.value = true
     try {
       const response = await configAPI.get()
+      const data = response.data.data
+      
+      // 更新配置
       config.value = {
         ...config.value,
-        ...response.data.data
+        ...data.config
       }
+      
+      // 更新管理员状态
+      isAdmin.value = data.isAdmin || false
+      adminEnabled.value = data.adminEnabled || false
+      
+      console.log('Config loaded, isAdmin:', isAdmin.value)
     } catch (error) {
       console.error('Failed to load config:', error)
       throw error
@@ -58,6 +69,8 @@ export const useConfigStore = defineStore('config', () => {
   return {
     config,
     loading,
+    isAdmin,
+    adminEnabled,
     domainList,
     defaultDomain,
     loadConfig,
