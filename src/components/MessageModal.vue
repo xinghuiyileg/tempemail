@@ -36,7 +36,7 @@
           </div>
 
           <div class="detail-body">
-            <div v-if="message.body_html" v-html="sanitizeHtml(message.body_html)"></div>
+            <div v-if="message.body_html" class="html-body" v-html="sanitizeHtml(message.body_html)"></div>
             <div v-else class="text-body">{{ message.body_text }}</div>
           </div>
         </div>
@@ -233,6 +233,64 @@ const sanitizeHtml = (html) => {
 .text-body {
   white-space: pre-wrap;
   word-wrap: break-word;
+}
+
+.html-body {
+  /* HTML 邮件容器样式 */
+  width: 100%;
+  overflow-x: auto;
+  background: #f5f7fa;
+  padding: 20px;
+  border-radius: 8px;
+  box-sizing: border-box;
+}
+
+/* HTML 邮件内部元素样式 */
+.html-body :deep(*) {
+  max-width: 100% !important;
+  box-sizing: border-box;
+}
+
+.html-body :deep(table) {
+  border-collapse: collapse;
+  margin: 0 auto;
+  background: #fff;
+}
+
+.html-body :deep(td) {
+  padding: inherit;
+}
+
+.html-body :deep(img) {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+.html-body :deep(a) {
+  color: #6c7bff;
+  text-decoration: underline;
+  word-break: break-all;
+}
+
+.html-body :deep(a:hover) {
+  opacity: 0.8;
+}
+
+/* 保留邮件原始样式但限制宽度 */
+.html-body :deep(table[width]) {
+  width: 100% !important;
+  max-width: 600px !important;
+}
+
+@media (prefers-color-scheme: dark) {
+  .html-body {
+    background: #1a1a1a;
+  }
+  
+  .html-body :deep(table) {
+    background: #2d2d2d;
+  }
 }
 
 @keyframes fadeIn {
