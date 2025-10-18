@@ -151,7 +151,14 @@ const sanitizeHtml = (html) => {
 .modal-body {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 24px;
+  /* 平滑滚动 */
+  scroll-behavior: smooth;
+  /* 优化滚动性能 */
+  -webkit-overflow-scrolling: touch;
+  /* 确保可以滚动 */
+  min-height: 0;
 }
 
 .detail-subject {
@@ -243,6 +250,9 @@ const sanitizeHtml = (html) => {
   padding: 20px;
   border-radius: 8px;
   box-sizing: border-box;
+  /* 确保内容可见且可滚动 */
+  max-height: none;
+  min-height: auto;
 }
 
 /* HTML 邮件内部元素样式 */
@@ -281,6 +291,26 @@ const sanitizeHtml = (html) => {
 .html-body :deep(table[width]) {
   width: 100% !important;
   max-width: 600px !important;
+}
+
+/* 自定义滚动条样式 */
+.modal-body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.modal-body::-webkit-scrollbar-track {
+  background: var(--muted);
+  border-radius: 4px;
+}
+
+.modal-body::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+.modal-body::-webkit-scrollbar-thumb:hover {
+  background: var(--brand);
 }
 
 @media (prefers-color-scheme: dark) {
