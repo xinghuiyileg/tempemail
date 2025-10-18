@@ -271,7 +271,7 @@ const handleAdminLogin = async () => {
   }
 
   try {
-    adminStore.loginAdmin(adminPasswordInput.value)
+    await adminStore.loginAdmin(adminPasswordInput.value)
     showNotification('管理员身份验证成功', 'success')
     await loadConfig()
   } catch (error) {

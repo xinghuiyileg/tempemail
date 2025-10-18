@@ -105,5 +105,11 @@ export const configAPI = {
   update: (data) => apiClient.put('/config', data)
 }
 
+// 管理员相关API
+export const adminAPI = {
+  // 验证管理员密码
+  verify: (password) => apiClient.post('/auth/admin/verify', { password })
+}
+
 export default apiClient
 
