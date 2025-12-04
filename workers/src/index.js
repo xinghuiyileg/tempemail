@@ -5,6 +5,11 @@ import messageRoutes from './routes/message'
 import monitorRoutes from './routes/monitor'
 import configRoutes from './routes/config'
 import authRoutes from './routes/auth'
+import usersRoutes from './routes/users'
+import backupRoutes from './routes/backup'
+import tempMailRoutes from './routes/tempmail'
+import domainsRoutes from './routes/domains'
+import securityRoutes from './routes/security'
 import emailWorker from './email-worker'
 import { requireAuth, requiresAuth } from './middleware/auth'
 
@@ -24,7 +29,7 @@ export default {
           success: true,
           name: 'tempemail-api',
           status: 'ok',
-          endpoints: ['/api/emails', '/api/messages', '/api/monitor', '/api/config'],
+          endpoints: ['/api/emails', '/api/messages', '/api/monitor', '/api/config', '/api/tempmail'],
           health: '/health'
         })
         return new Response(body, {
@@ -65,6 +70,11 @@ export default {
     router.use('/api/messages', messageRoutes)
     router.use('/api/monitor', monitorRoutes)
     router.use('/api/config', configRoutes)
+    router.use('/api/users', usersRoutes)
+    router.use('/api/backup', backupRoutes)
+    router.use('/api/tempmail', tempMailRoutes)  // TempMailApi集成
+    router.use('/api/domains', domainsRoutes)  // 域名管理
+    router.use('/api/security', securityRoutes)  // 安全相关（CSRF、审计日志）
 
     // WebSocket 处理
     if (request.headers.get('Upgrade') === 'websocket') {

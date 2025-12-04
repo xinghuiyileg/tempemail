@@ -3,7 +3,10 @@ import { useMessageStore } from '@/stores/messageStore'
 import { useMonitorStore } from '@/stores/monitorStore'
 import { useNotificationStore } from '@/stores/notificationStore'
 
-const WS_URL = import.meta.env.VITE_WS_URL || 'ws://localhost:8787/ws'
+const WS_URL = import.meta.env.VITE_WS_URL || 
+  (import.meta.env.MODE === 'production' 
+    ? 'wss://tempemail-back.pslucieljw.workers.dev/ws' 
+    : 'ws://localhost:8787/ws')
 
 export function useWebSocket() {
   const ws = ref(null)
@@ -25,10 +28,10 @@ export function useWebSocket() {
       ws.value = new WebSocket(WS_URL)
 
       ws.value.onopen = () => {
-        console.log('WebSocket connected')
+        console.log('✅ WebSocket 已连接')
         connected.value = true
         reconnectAttempts.value = 0
-        notificationStore.add('实时连接已建立', 'success')
+        // 移除弹窗通知，改为仅在控制台输出（无感连接）
       }
 
       ws.value.onmessage = (event) => {

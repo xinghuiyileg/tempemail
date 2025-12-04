@@ -30,8 +30,38 @@ export function verifyAuth(request, env) {
   // 支持 Bearer Token 格式
   const token = authHeader.replace(/^Bearer\s+/i, '')
   
-  // 简单的密码比对
-  return token === configPassword
+  // 1. 验证访问密码token
+  if (token === configPassword) {
+    return true
+  }
+  
+  // 2. 验证账号登录token（格式：account_username_timestamp）
+  if (token.startsWith('account_')) {
+    const parts = token.split('_')
+    if (parts.length === 3 && parts[0] === 'account') {
+      const timestamp = parseInt(parts[2])
+      if (!isNaN(timestamp) && timestamp > 0) {
+        // 账号登录的token格式正确，认为有效
+        return true
+      }
+    }
+    return false
+  }
+  
+  // 3. 验证 OAuth token（格式：oauth_provider_timestamp）
+  if (token.startsWith('oauth_')) {
+    const parts = token.split('_')
+    if (parts.length === 3 && parts[0] === 'oauth') {
+      const timestamp = parseInt(parts[2])
+      if (!isNaN(timestamp) && timestamp > 0) {
+        return true
+      }
+    }
+    return false
+  }
+  
+  // 其他情况都认为无效
+  return false
 }
 
 /**
@@ -87,6 +117,12 @@ export function getPublicPaths() {
   return [
     '/api/auth/check',
     '/api/auth/login',
+    '/api/auth/verify',          // 验证token
+    '/api/auth/register',        // 账号注册
+    '/api/auth/account-login',   // 账号登录
+    '/api/auth/captcha',         // 验证码生成（必须公开）
+    '/api/auth/oauth',           // OAuth 登录（百度等第三方）
+    '/api/tempmail*',            // TempMailApi 集成（公开访问）
     '/health',
     '/',
     '/ws' // WebSocket 连接需要单独验证

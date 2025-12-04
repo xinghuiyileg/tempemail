@@ -3,6 +3,14 @@
 const patterns = [
   // === 高优先级：明确标识的验证码（带关键词+分隔符）===
   
+  // 中文 - 带括号包裹的验证码（最常见格式）- 优先匹配这些精确格式
+  /(?:登录|注册|绑定|激活)?验证码为[【\[\(]([A-Za-z0-9]{4,8})[】\]\)]/i,
+  /您的(?:登录|注册|绑定|激活)?验证码为[【\[\(]([A-Za-z0-9]{4,8})[】\]\)]/i,
+  /验证码[是：:\s]+[【\[\(]([A-Za-z0-9]{4,8})[】\]\)]/i,
+  /[【\[\(]验证码[】\]\)][是为：:\s]*[【\[\(]([A-Za-z0-9]{4,8})[】\]\)]/i,
+  /动态码为[【\[\(]([A-Za-z0-9]{4,8})[】\]\)]/i,
+  /动态码[是：:\s]+[【\[\(]([A-Za-z0-9]{4,8})[】\]\)]/i,
+  
   // 中文 - 严格格式（冒号/空格/多换行后紧跟验证码）
   /验证码[：:\s]*[是为]{0,1}\s*[：:]?[\s\r\n]*([A-Za-z0-9]{4,8})\b/i,
   /[【\[\(]验证码[】\]\)][：:\s]*([A-Za-z0-9]{4,8})\b/i,
@@ -114,14 +122,11 @@ function isInvalidCode(code) {
   const upper = code.toUpperCase()
   
   // 排除纯字母的常见词（不太可能是验证码）
-  const commonWords = ['BUTTON', 'SUBMIT', 'LOGIN', 'EMAIL', 'PHONE', 'CLICK', 'HERE', 'VERIFY', 'CODE', 'AMAZON', 'GOOGLE', 'PAYPAL', 'GITHUB', 'ACCOUNT', 'MICROSOFT', 'APPLE', 'FACEBOOK', 'TWITTER', 'ANYONE', 'SOMEONE', 'PLEASE']
+  const commonWords = ['BUTTON', 'SUBMIT', 'LOGIN', 'EMAIL', 'PHONE', 'CLICK', 'HERE', 'VERIFY', 'CODE', 'AMAZON', 'GOOGLE', 'PAYPAL', 'GITHUB', 'ACCOUNT', 'MICROSOFT', 'APPLE', 'FACEBOOK', 'TWITTER', 'ANYONE', 'SOMEONE', 'PLEASE', 'ADSPOWER', 'ADSPOWER']
   if (commonWords.includes(upper)) return true
   
   // 排除明显的日期格式（如 202410、20241016）
   if (/^20\d{4,6}$/.test(code)) return true
-  
-  // 排除明显的时间格式（如 120000、235959）
-  if (/^[0-2]\d[0-5]\d[0-5]\d$/.test(code)) return true
   
   // 排除纯重复字符（如 111111、AAAAAA）
   if (/^(.)\1{3,}$/.test(code)) return true

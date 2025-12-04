@@ -1,78 +1,44 @@
 @echo off
-chcp 65001 >nul
-echo 🚀 启动临时邮箱系统（开发模式）
-echo ================================
+chcp 65001 > nul
+
+echo ========================================
+echo 🚀 启动完整本地开发环境
+echo ========================================
 echo.
 
-:: 检查依赖是否已安装
-if not exist "frontend\node_modules" (
-    echo ❌ 前端依赖未安装
-    echo 请先运行: local-setup.bat
-    pause
-    exit /b 1
-)
-
-if not exist "workers\node_modules" (
-    echo ❌ Workers 依赖未安装
-    echo 请先运行: local-setup.bat
-    pause
-    exit /b 1
-)
-
-:: 检查环境变量
-if not exist "frontend\.env" (
-    echo ❌ 前端环境变量未配置
-    echo 请先运行: local-setup.bat
-    pause
-    exit /b 1
-)
-
-if not exist "workers\.dev.vars" (
-    echo ❌ Workers 环境变量未配置
-    echo 请先运行: local-setup.bat
-    pause
-    exit /b 1
-)
-
-echo ✅ 依赖检查完成
-echo.
-echo 正在启动服务...
-echo.
-echo 📝 注意：
-echo   - Workers 将运行在 http://localhost:8787
-echo   - 前端将运行在 http://localhost:5173
-echo   - 按 Ctrl+C 可以停止服务
-echo.
-echo ================================
+echo 📝 本地开发环境配置:
+echo    - 后端: http://localhost:8787
+echo    - 前端: http://localhost:5173
+echo    - 数据库: 本地 SQLite (.wrangler/state/v3/d1/)
 echo.
 
-:: 启动 Workers（在新窗口）
-start "临时邮箱 - Workers API" cmd /k "cd workers && npm run dev"
-
-:: 等待 3 秒让 Workers 启动
-timeout /t 3 /nobreak >nul
-
-:: 启动前端（在新窗口）
-start "临时邮箱 - 前端" cmd /k "cd frontend && npm run dev"
-
-:: 等待 5 秒让前端启动
-timeout /t 5 /nobreak >nul
-
-:: 打开浏览器
+echo ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+echo 💡 提示: 
+echo    - 后端和前端将在两个独立的窗口中运行
+echo    - 关闭任一窗口将停止对应的服务
+echo    - 使用 Ctrl+C 可以停止服务
+echo ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 echo.
-echo 🌐 正在打开浏览器...
-start http://localhost:5173
+
+echo 🔧 步骤 1/2: 启动后端服务器...
+start "TempEmail - 后端服务器" cmd /k "cd /d %~dp0workers && echo 🚀 启动后端开发服务器... && echo. && npm run dev"
+
+echo ⏳ 等待后端启动 (5秒)...
+timeout /t 5 /nobreak > nul
 
 echo.
-echo ✅ 服务已启动！
+echo 🎨 步骤 2/2: 启动前端服务器...
+start "TempEmail - 前端服务器" cmd /k "cd /d %~dp0frontend && echo 🚀 启动前端开发服务器... && echo. && npm run dev"
+
 echo.
-echo 📊 查看日志：
-echo   - Workers 日志在 "临时邮箱 - Workers API" 窗口
-echo   - 前端日志在 "临时邮箱 - 前端" 窗口
+echo ✅ 开发环境启动完成！
 echo.
-echo 🛑 停止服务：
-echo   - 关闭两个命令行窗口
-echo   - 或在窗口中按 Ctrl+C
+echo 📍 访问地址:
+echo    前端: http://localhost:5173
+echo    后端: http://localhost:8787
 echo.
+echo 💡 两个服务器窗口已打开，请保持它们运行
+echo.
+
 pause
 
