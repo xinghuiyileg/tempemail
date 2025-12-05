@@ -51,6 +51,7 @@ Thumbs.db
 # Cloudflare
 .wrangler/
 wrangler.toml.backup
+workers/wrangler.toml
 
 # 数据库
 *.db
