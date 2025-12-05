@@ -18,6 +18,11 @@ build/
 .env.test.local
 .env.production.local
 .dev.vars
+.env.tempmailapi
+*/.dev.vars
+*/.env.tempmailapi
+workers/.dev.vars
+workers/.env.tempmailapi
 
 # 日志
 npm-debug.log*
